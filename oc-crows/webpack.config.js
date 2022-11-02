@@ -1,38 +1,51 @@
+require('dotenv/config');
 const path = require('path');
+const webpack = require('webpack');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 
-const srcPath = path.join(__dirname, 'src');
-const distPath = path.join(__dirname, 'dist');
+const clientPath = path.join(__dirname, 'client');
+const serverPublicPath = path.join(__dirname, 'server', 'public');
+
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 module.exports = {
+  mode: process.env.NODE_ENV,
+  entry: [
+    clientPath,
+    isDevelopment && 'webpack-hot-middleware/client?timeout=1000'
+  ].filter(Boolean),
   resolve: {
     extensions: ['.js', '.jsx']
+  },
+  output: {
+    path: serverPublicPath
   },
   module: {
     rules: [
       {
         test: /\.jsx?$/,
-        include: srcPath,
+        exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
           options: {
+            presets: [
+              '@babel/preset-env'
+            ],
             plugins: [
-              '@babel/plugin-transform-react-jsx'
-            ]
+              '@babel/plugin-transform-react-jsx',
+              isDevelopment && 'react-refresh/babel'
+            ].filter(Boolean)
           }
         }
       }
     ]
   },
-  devtool: 'source-map',
-  devServer: {
-    host: '0.0.0.0',
-    port: 3000,
-    static: {
-      directory: distPath
-    }
-  },
   stats: 'minimal',
-  performance: {
-    hints: false
-  }
+  devtool: 'source-map',
+  plugins: [
+    new webpack.EnvironmentPlugin([]),
+    isDevelopment && new ReactRefreshWebpackPlugin(),
+    isDevelopment && new webpack.NoEmitOnErrorsPlugin(),
+    isDevelopment && new webpack.HotModuleReplacementPlugin()
+  ].filter(Boolean)
 };
